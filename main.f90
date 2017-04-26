@@ -2,60 +2,52 @@
 
       implicit none
 
-      integer(8)                  :: sol
-      integer(8)                  :: n
-      integer(8)                  :: kmax
-      integer(8)                  :: nx
-      integer(8)                  :: src
-      real(8)                     :: c(2)
+      integer(8)                :: sol
+      integer(8)                :: n
+      integer(8)                :: kmax
+      integer(8)                :: nx
+      integer(8)                :: src
+      real(8)                   :: c(2)
 
-      call read_input(sol,src,c,n,kmax,nx) 
+      integer(8)                :: s
+      integer(8)                :: xn
 
-      call solve_slab(sol,src,c,n,kmax,nx) 
+      do sol=0,3
+        do src=1,4
+          do s=1,3
+            if (s == 1) then
+              c(1)=0.99d0
+              c(2)=0.98d0
+            elseif (s == 2) then 
+              c(1)=0.95d0
+              c(2)=0.90d0
+            elseif (s == 3) then 
+              c(1)=0.75d0
+              c(2)=0.50d0
+            endif
+            n=6
+            kmax=10000
+            do xn=1,12
+              nx=5*2**(xn-1)
+              call solve_slab(sol,src,s,c,n,kmax,xn,nx) 
+            enddo
+          enddo
+        enddo
+      enddo
 
       contains
 
-      subroutine read_input(sol,src,c,n,kmax,nx) 
+      subroutine solve_slab(sol,src,s,c,n,kmax,xn,nx) 
 
         implicit none
 
-        integer(8), intent(out)   :: sol
-        integer(8), intent(out)   :: n
-        integer(8), intent(out)   :: nx
-        integer(8), intent(out)   :: kmax
-        integer(8), intent(out)   :: src
-        real(8),    intent(out)   :: c(2)
-
-        integer(8)                :: i
-        integer(8)                :: x
-
-        open(unit=1,file='input',action='read',status='unknown')
-        read(1,*) sol
-        read(1,*) src
-        read(1,*) c(1)
-        read(1,*) c(2)
-        read(1,*) n
-        read(1,*) kmax
-        read(1,*) nx
-        close(1)
-
-        x=5
-        do i=1,nx-1
-          x=x*2
-        enddo
-        nx=x
-
-      end subroutine read_input
-
-      subroutine solve_slab(sol,src,c,n,kmax,nx) 
-
-        implicit none
-
-        integer(8), intent(in)    :: kmax
-        integer(8), intent(in)    :: n
-        integer(8), intent(in)    :: nx
         integer(8), intent(in)    :: sol
         integer(8), intent(in)    :: src
+        integer(8), intent(in)    :: s
+        integer(8), intent(in)    :: n
+        integer(8), intent(in)    :: kmax
+        integer(8), intent(in)    :: xn
+        integer(8), intent(in)    :: nx
         real(8),    intent(in)    :: c(2)
 
         integer(8)                :: j
@@ -76,6 +68,11 @@
         real(8), allocatable      :: sigt(:)
         real(8), allocatable      :: sigs(:)
         real(8), allocatable      :: xmsh(:)
+        character(1)              :: prbopt
+        character(1)              :: srcopt
+        character(1)              :: solopt
+        character(2)              :: xnopt
+        character(13)             :: output
 
       ! mesh slab geometry
 
@@ -160,14 +157,27 @@
           stop
         endif
 
-      ! write solution into file
+      ! write flux solution into file
 
-        open(unit=1,file='output',action='write',status='unknown')
+        write(prbopt,'(i1)') s
+        write(solopt,'(i1)') sol
+        write(srcopt,'(i1)') src
+        write(xnopt, '(i2)') xn
+        output='p'//prbopt//'-'//srcopt//'-'//solopt//'-'//trim(adjustl(xnopt))//'.out'
+        open(unit=1,file=output,action='write',status='unknown')
         write(1,*) jmax
         do j=1,jmax
           write(1,*) phi(j)
         enddo
         close(1)
+
+      ! clean up arrays
+
+        deallocate(phi)
+        deallocate(q)
+        deallocate(sigt)
+        deallocate(sigs)
+        deallocate(xmsh)
 
       end subroutine solve_slab
 
@@ -260,6 +270,11 @@
           write(0,'(a,i8,a,es12.5)') ' Source iteration did not converge, k = ',k,' err = ',merr
           stop
         endif
+
+        deallocate(c1)
+        deallocate(c2)
+        deallocate(s)
+        deallocate(phio)
 
       end subroutine solve_dd
 
@@ -366,6 +381,12 @@
           write(0,'(a,i8,a,es12.5)') ' Source iteration did not converge, k = ',k,' err = ',merr
           stop
         endif
+
+        deallocate(alpha)
+        deallocate(c1)
+        deallocate(c2)
+        deallocate(phio)
+        deallocate(s)
 
       end subroutine solve_sc
 
@@ -478,6 +499,14 @@
           write(0,'(a,i8,a,es12.5)') ' Source iteration did not converge, k = ',k,' err = ',merr
           stop
         endif
+
+        deallocate(alpha)
+        deallocate(c1)
+        deallocate(c2)
+        deallocate(phio)
+        deallocate(phil)
+        deallocate(s)
+        deallocate(sl)
 
       end subroutine solve_ld
 
@@ -604,6 +633,15 @@
           write(0,'(a,i8,a,es12.5)') ' Source iteration did not converge, k = ',k,' err = ',merr
           stop
         endif
+
+        deallocate(alpha)
+        deallocate(rbeta)
+        deallocate(c1)
+        deallocate(c2)
+        deallocate(phio)
+        deallocate(phil)
+        deallocate(s)
+        deallocate(sl)
 
       end subroutine solve_lc
 

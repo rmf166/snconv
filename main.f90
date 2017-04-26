@@ -26,6 +26,9 @@
         integer(8), intent(out)   :: src
         real(8),    intent(out)   :: c(2)
 
+        integer(8)                :: i
+        integer(8)                :: x
+
         open(unit=1,file='input',action='read',status='unknown')
         read(1,*) sol
         read(1,*) src
@@ -35,7 +38,12 @@
         read(1,*) kmax
         read(1,*) nx
         close(1)
-        nx=5**nx
+
+        x=5
+        do i=1,nx-1
+          x=x*2
+        enddo
+        nx=x
 
       end subroutine read_input
 
@@ -186,14 +194,16 @@
         real(8)                   :: merr
         real(8)                   :: psi
         real(8)                   :: psi_in
-        real(8)                   :: c1   (jmax,n/2)
-        real(8)                   :: c2   (jmax,n/2)
         real(8)                   :: psi_bc(n/2)
-        real(8)                   :: phio(jmax)
-        real(8)                   :: s(jmax)
+        real(8),    allocatable   :: c1(:,:)
+        real(8),    allocatable   :: c2(:,:)
+        real(8),    allocatable   :: phio(:)
+        real(8),    allocatable   :: s(:)
 
       ! pre-compute coeffs
 
+        allocate(c1(jmax,n/2))
+        allocate(c2(jmax,n/2))
         c1=0.0d0
         c2=0.0d0
 
@@ -207,6 +217,7 @@
 
       ! solve problem
 
+        allocate(s(jmax))
         do j=1,jmax
           phi(j)=1.0d0
           s(j)  =0.5d0*(sigs(j)*phi(j)+q(j))
@@ -215,18 +226,19 @@
         psi_in=0.0d0
         psi_bc=0.0d0
 
+        allocate(phio(jmax))
         do k=1,kmax
           phio=phi
           phi =0.0d0
           do m=1,n/2
             psi_in=psi_bc(m) ! left specular bc
             do j=1,jmax
-              psi   =(s(j)*c2(j,m)+psi_in)/(1.0d0+c1(j,m))
+              psi =(s(j)*c2(j,m)+psi_in)/(1.0d0+c1(j,m))
               phi(j)=phi(j)+psi*w(m)
               psi_in=2.0d0*psi-psi_in
             enddo
             do j=jmax,1,-1
-              psi   =(s(j)*c2(j,m)+psi_in)/(1.0d0+c1(j,m))
+              psi =(s(j)*c2(j,m)+psi_in)/(1.0d0+c1(j,m))
               phi(j)=phi(j)+psi*w(m)
               psi_in=2.0d0*psi-psi_in
             enddo
@@ -277,15 +289,18 @@
         real(8)                   :: merr
         real(8)                   :: psi
         real(8)                   :: psi_in
-        real(8)                   :: alpha(jmax,n/2)
-        real(8)                   :: c1   (jmax,n/2)
-        real(8)                   :: c2   (jmax,n/2)
         real(8)                   :: psi_bc(n/2)
-        real(8)                   :: phio(jmax)
-        real(8)                   :: s(jmax)
+        real(8),    allocatable   :: alpha(:,:)
+        real(8),    allocatable   :: c1(:,:)
+        real(8),    allocatable   :: c2(:,:)
+        real(8),    allocatable   :: phio(:)
+        real(8),    allocatable   :: s(:)
 
       ! pre-compute coeffs
 
+        allocate(alpha(jmax,n/2))
+        allocate(c1(jmax,n/2))
+        allocate(c2(jmax,n/2))
         alpha=0.0d0
         c1   =0.0d0
         c2   =0.0d0
@@ -308,6 +323,7 @@
 
       ! solve problem
 
+        allocate(s(jmax))
         do j=1,jmax
           phi(j)=1.0d0
           s(j)  =0.5d0*(sigs(j)*phi(j)+q(j))
@@ -316,18 +332,19 @@
         psi_in=0.0d0
         psi_bc=0.0d0
 
+        allocate(phio(jmax))
         do k=1,kmax
           phio=phi
           phi =0.0d0
           do m=1,n/2
             psi_in=psi_bc(m) ! left specular bc
             do j=1,jmax
-              psi   =(s(j)*c2(j,m)+psi_in)/(1.0d0+c1(j,m))
+              psi=(s(j)*c2(j,m)+psi_in)/(1.0d0+c1(j,m))
               phi(j)=phi(j)+psi*w(m)
               psi_in=(2.0d0*psi-(1.0d0-alpha(j,m))*psi_in)/(1.0d0+alpha(j,m))
             enddo
             do j=jmax,1,-1
-              psi   =(s(j)*c2(j,m)+psi_in)/(1.0d0+c1(j,m))
+              psi=(s(j)*c2(j,m)+psi_in)/(1.0d0+c1(j,m))
               phi(j)=phi(j)+psi*w(m)
               psi_in=(2.0d0*psi-(1.0d0-alpha(j,m))*psi_in)/(1.0d0+alpha(j,m))
             enddo
@@ -377,17 +394,20 @@
         real(8)                   :: psil
         real(8)                   :: psi_in
         real(8)                   :: psi_out
-        real(8)                   :: alpha(jmax,n/2)
-        real(8)                   :: c1   (jmax,n/2)
-        real(8)                   :: c2   (jmax,n/2)
         real(8)                   :: psi_bc(n/2)
-        real(8)                   :: phil(jmax)
-        real(8)                   :: phio(jmax)
-        real(8)                   :: s (jmax)
-        real(8)                   :: sl(jmax)
+        real(8),    allocatable   :: alpha(:,:)
+        real(8),    allocatable   :: c1(:,:)
+        real(8),    allocatable   :: c2(:,:)
+        real(8),    allocatable   :: phio(:)
+        real(8),    allocatable   :: phil(:)
+        real(8),    allocatable   :: s(:)
+        real(8),    allocatable   :: sl(:)
 
       ! pre-compute coeffs
 
+        allocate(alpha(jmax,n/2))
+        allocate(c1(jmax,n/2))
+        allocate(c2(jmax,n/2))
         alpha=0.0d0
         c1   =0.0d0
         c2   =0.0d0
@@ -403,6 +423,9 @@
 
       ! solve problem
 
+        allocate(phil(jmax))
+        allocate(s(jmax))
+        allocate(sl(jmax))
         do j=1,jmax
           phi(j) =1.0d0
           phil(j)=0.0d0
@@ -413,6 +436,7 @@
         psi_in=0.0d0
         psi_bc=0.0d0
 
+        allocate(phio(jmax))
         do k=1,kmax
           phio=phi
           phi =0.0d0
@@ -421,19 +445,19 @@
             psi_in=psi_bc(m) ! left specular bc
             do j=1,jmax
               psi_out=c2(j,m)*(2.0d0*(s(j)+alpha(j,m)*sl(j))/sigt(j)+c1(j,m)*psi_in)
-              psi    =((1.0d0+alpha(j,m))*psi_out+(1.0d0-alpha(j,m))*psi_in)/2.0d0-alpha(j,m)*sl(j)/sigt(j)
-              psil   =psi_out-psi
-              psi_in =psi_out
-              phi(j) =phi(j) +psi*w(m)
+              psi=((1.0d0+alpha(j,m))*psi_out+(1.0d0-alpha(j,m))*psi_in)/2.0d0-alpha(j,m)*sl(j)/sigt(j)
+              psil=psi_out-psi
+              psi_in=psi_out
+              phi(j)=phi(j) +psi*w(m)
               phil(j)=phil(j)+psil*w(m)
             enddo
             do j=jmax,1,-1
-              psi_out   =c2(j,m)*(2.0d0*(s(j)-alpha(j,m)*sl(j))/sigt(j)+c1(j,m)*psi_in)
-              psi       =((1.0d0+alpha(j,m))*psi_out+(1.0d0-alpha(j,m))*psi_in)/2.0d0+alpha(j,m)*sl(j)/sigt(j)
-              psil      =psi-psi_out
-              psi_in    =psi_out
-              phi(j)    =phi(j) +psi*w(m)
-              phil(j)   =phil(j)+psil*w(m)
+              psi_out=c2(j,m)*(2.0d0*(s(j)-alpha(j,m)*sl(j))/sigt(j)+c1(j,m)*psi_in)
+              psi=((1.0d0+alpha(j,m))*psi_out+(1.0d0-alpha(j,m))*psi_in)/2.0d0+alpha(j,m)*sl(j)/sigt(j)
+              psil=psi-psi_out
+              psi_in=psi_out
+              phi(j)=phi(j) +psi*w(m)
+              phil(j)=phil(j)+psil*w(m)
             enddo
             psi_bc(m)=psi_in
           enddo
@@ -485,18 +509,22 @@
         real(8)                   :: psil
         real(8)                   :: psi_in
         real(8)                   :: psi_out
-        real(8)                   :: alpha(jmax,n/2)
-        real(8)                   :: rbeta(jmax,n/2)
-        real(8)                   :: c1   (jmax,n/2)
-        real(8)                   :: c2   (jmax,n/2)
         real(8)                   :: psi_bc(n/2)
-        real(8)                   :: phil(jmax)
-        real(8)                   :: phio(jmax)
-        real(8)                   :: s (jmax)
-        real(8)                   :: sl(jmax)
+        real(8),    allocatable   :: alpha(:,:)
+        real(8),    allocatable   :: rbeta(:,:)
+        real(8),    allocatable   :: c1(:,:)
+        real(8),    allocatable   :: c2(:,:)
+        real(8),    allocatable   :: phio(:)
+        real(8),    allocatable   :: phil(:)
+        real(8),    allocatable   :: s(:)
+        real(8),    allocatable   :: sl(:)
 
       ! pre-compute coeffs
 
+        allocate(alpha(jmax,n/2))
+        allocate(rbeta(jmax,n/2))
+        allocate(c1(jmax,n/2))
+        allocate(c2(jmax,n/2))
         alpha=0.0d0
         rbeta=0.0d0
         c1   =0.0d0
@@ -521,6 +549,9 @@
 
       ! solve problem
 
+        allocate(phil(jmax))
+        allocate(s(jmax))
+        allocate(sl(jmax))
         do j=1,jmax
           phi(j) =1.0d0
           phil(j)=0.0d0
@@ -531,6 +562,7 @@
         psi_in=0.0d0
         psi_bc=0.0d0
 
+        allocate(phio(jmax))
         do k=1,kmax
           phio=phi
           phi =0.0d0
@@ -539,19 +571,19 @@
             psi_in=psi_bc(m) ! left specular bc
             do j=1,jmax
               psi_out=c2(j,m)*(2.0d0*(s(j)+alpha(j,m)*sl(j))/sigt(j)+c1(j,m)*psi_in)
-              psi    =((1.0d0+alpha(j,m))*psi_out+(1.0d0-alpha(j,m))*psi_in)/2.0d0-alpha(j,m)*sl(j)/sigt(j)
-              psil   =((rbeta(j,m)+1.0d0)*psi_out+(rbeta(j,m)-1.0d0)*psi_in)/2.0d0-rbeta(j,m)*psi
+              psi=((1.0d0+alpha(j,m))*psi_out+(1.0d0-alpha(j,m))*psi_in)/2.0d0-alpha(j,m)*sl(j)/sigt(j)
+              psil=((rbeta(j,m)+1.0d0)*psi_out+(rbeta(j,m)-1.0d0)*psi_in)/2.0d0-rbeta(j,m)*psi
               psi_in =psi_out
               phi(j) =phi(j) +psi*w(m)
               phil(j)=phil(j)+psil*w(m)
             enddo
             do j=jmax,1,-1
-              psi_out   =c2(j,m)*(2.0d0*(s(j)-alpha(j,m)*sl(j))/sigt(j)+c1(j,m)*psi_in)
-              psi       =((1.0d0+alpha(j,m))*psi_out+(1.0d0-alpha(j,m))*psi_in)/2.0d0+alpha(j,m)*sl(j)/sigt(j)
-              psil      =-((rbeta(j,m)+1.0d0)*psi_out+(rbeta(j,m)-1.0d0)*psi_in)/2.0d0+rbeta(j,m)*psi
-              psi_in    =psi_out
-              phi(j)    =phi(j) +psi*w(m)
-              phil(j)   =phil(j)+psil*w(m)
+              psi_out=c2(j,m)*(2.0d0*(s(j)-alpha(j,m)*sl(j))/sigt(j)+c1(j,m)*psi_in)
+              psi=((1.0d0+alpha(j,m))*psi_out+(1.0d0-alpha(j,m))*psi_in)/2.0d0+alpha(j,m)*sl(j)/sigt(j)
+              psil=-((rbeta(j,m)+1.0d0)*psi_out+(rbeta(j,m)-1.0d0)*psi_in)/2.0d0+rbeta(j,m)*psi
+              psi_in=psi_out
+              phi(j)=phi(j) +psi*w(m)
+              phil(j)=phil(j)+psil*w(m)
             enddo
             psi_bc(m)=psi_in
           enddo

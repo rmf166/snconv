@@ -31,6 +31,8 @@
               nx=5*2**(xn-1)
               call solve_slab(sol,src,s,c,n,kmax,xn,nx) 
             enddo
+            nx=5*2**(20-1)
+            call solve_slab(sol,src,s,c,n,kmax,xn,nx) 
           enddo
         enddo
       enddo

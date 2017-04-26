@@ -31,9 +31,29 @@
               nx=5*2**(xn-1)
               call solve_slab(sol,src,s,c,n,kmax,xn,nx) 
             enddo
-            nx=5*2**(20-1)
-            call solve_slab(sol,src,s,c,n,kmax,xn,nx) 
           enddo
+        enddo
+      enddo
+
+      ! reference case (nx=20)
+
+      sol=0
+      do src=1,4
+        do s=1,3
+          if (s == 1) then
+            c(1)=0.99d0
+            c(2)=0.98d0
+          elseif (s == 2) then 
+            c(1)=0.95d0
+            c(2)=0.90d0
+          elseif (s == 3) then 
+            c(1)=0.75d0
+            c(2)=0.50d0
+          endif
+          n=6
+          kmax=10000
+          nx=5*2**(20-1)
+          call solve_slab(sol,src,s,c,n,kmax,xn,nx) 
         enddo
       enddo
 
@@ -67,6 +87,7 @@
         real(8)                   :: w (n/2)
         real(8), allocatable      :: phi (:)
         real(8), allocatable      :: q   (:)
+        real(8), allocatable      :: ql  (:)
         real(8), allocatable      :: sigt(:)
         real(8), allocatable      :: sigs(:)
         real(8), allocatable      :: xmsh(:)
@@ -87,11 +108,13 @@
 
         allocate(phi(jmax))
         allocate(q(jmax))
+        allocate(ql(jmax))
         allocate(sigt(jmax))
         allocate(sigs(jmax))
         allocate(xmsh(jmax))
         phi=0.0d0
         q=0.0d0
+        ql=0.0d0
         sigt=0.0d0
         sigs=0.0d0
         xmsh=0.0d0
@@ -105,8 +128,12 @@
             xm=h*dble(j-1)
             xp=h*dble(j)
             xj=0.5d0*(xp+xm)
-            q(j)=0.005d0*xj+0.95d0
-            if (j > jmax/2) q(j)=-0.005d0*xj+1.15d0
+            q (j)=0.005d0*xj+0.95d0
+            ql(j)=0.0025d0*h
+            if (j > jmax/2) then
+              q (j)=-0.005d0*xj+1.15d0
+              ql(j)=-0.0025d0*h
+            endif
           enddo
         elseif (src == 3) then  ! cosine
           pi=4.0d0*atan(1.0d0)
@@ -114,14 +141,17 @@
             xm=h*dble(j-1)
             xp=h*dble(j)
             xj=0.5d0*(xp+xm)
-            q(j)=20.0d0/h*(cos(pi*xm/40.0d0)-cos(pi*xp/40.0d0))
+            q (j)=40.0d0/h*sin(pi*h/80.0d0)*sin(pi*xj/40.0d0)
+            ql(j)=-120.0d0/(pi*h*h)*cos(pi*xj/40.0d0)*&
+                  (pi*h*cos(pi*h/80.0d0)-80.0d0*sin(pi*h/80.0d0))
           enddo
         elseif (src == 4) then  ! linear
           do j=1,jmax
             xm=h*dble(j-1)
             xp=h*dble(j)
             xj=0.5d0*(xp+xm)
-            q(j)=xj/20.0d0
+            q (j)=xj/20.0d0
+            ql(j)=h/40.0d0
           enddo
         else
           write(0,'(a)') ' Incorrect source option selected.'
@@ -151,9 +181,9 @@
         elseif (sol == 1) then
           call solve_sc(n,jmax,kmax,h,q,eps,sigt,sigs,mu,w,phi)
         elseif (sol == 2) then
-          call solve_ld(n,jmax,kmax,h,q,eps,sigt,sigs,mu,w,phi)
+          call solve_ld(n,jmax,kmax,h,q,ql,eps,sigt,sigs,mu,w,phi)
         elseif (sol == 3) then
-          call solve_lc(n,jmax,kmax,h,q,eps,sigt,sigs,mu,w,phi)
+          call solve_lc(n,jmax,kmax,h,q,ql,eps,sigt,sigs,mu,w,phi)
         else
           write(0,'(a)') ' Incorrect solution scheme selected.'
           stop
@@ -177,6 +207,7 @@
 
         deallocate(phi)
         deallocate(q)
+        deallocate(ql)
         deallocate(sigt)
         deallocate(sigs)
         deallocate(xmsh)
@@ -392,7 +423,7 @@
 
       end subroutine solve_sc
 
-      subroutine solve_ld(n,jmax,kmax,h,q,eps,sigt,sigs,mu,w,phi)
+      subroutine solve_ld(n,jmax,kmax,h,q,ql,eps,sigt,sigs,mu,w,phi)
 
         implicit none
 
@@ -401,6 +432,7 @@
         integer(8), intent(in)    :: kmax
         real(8),    intent(in)    :: h
         real(8),    intent(in)    :: q(jmax)
+        real(8),    intent(in)    :: ql(jmax)
         real(8),    intent(in)    :: eps
         real(8),    intent(in)    :: sigt(jmax)
         real(8),    intent(in)    :: sigs(jmax)
@@ -492,8 +524,8 @@
           if (merr < eps) exit
 
           do j=1,jmax
-            s (j)=0.5d0*(sigs(j)*phi (j)+q(j))
-            sl(j)=0.5d0*(sigs(j)*phil(j)  )
+            s (j)=0.5d0*(sigs(j)*phi (j)+q (j))
+            sl(j)=0.5d0*(sigs(j)*phil(j)+ql(j))
           enddo
         enddo
 
@@ -512,7 +544,7 @@
 
       end subroutine solve_ld
 
-      subroutine solve_lc(n,jmax,kmax,h,q,eps,sigt,sigs,mu,w,phi)
+      subroutine solve_lc(n,jmax,kmax,h,q,ql,eps,sigt,sigs,mu,w,phi)
 
         implicit none
 
@@ -521,6 +553,7 @@
         integer(8), intent(in)    :: kmax
         real(8),    intent(in)    :: h
         real(8),    intent(in)    :: q(jmax)
+        real(8),    intent(in)    :: ql(jmax)
         real(8),    intent(in)    :: eps
         real(8),    intent(in)    :: sigt(jmax)
         real(8),    intent(in)    :: sigs(jmax)
@@ -626,8 +659,8 @@
           if (merr < eps) exit
 
           do j=1,jmax
-            s (j)=0.5d0*(sigs(j)*phi (j)+q(j))
-            sl(j)=0.5d0*(sigs(j)*phil(j)  )
+            s (j)=0.5d0*(sigs(j)*phi (j)+q (j))
+            sl(j)=0.5d0*(sigs(j)*phil(j)+ql(j))
           enddo
         enddo
 

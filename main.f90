@@ -6,16 +6,16 @@
       integer(8)                  :: n
       integer(8)                  :: kmax
       integer(8)                  :: nx
-      real(8)                     :: q
+      integer(8)                  :: src
       real(8)                     :: c(2)
 
-      call read_input(sol,q,c,n,kmax,nx) 
+      call read_input(sol,src,c,n,kmax,nx) 
 
-      call solve_slab(sol,q,c,n,kmax,nx) 
+      call solve_slab(sol,src,c,n,kmax,nx) 
 
       contains
 
-      subroutine read_input(sol,q,c,n,kmax,nx) 
+      subroutine read_input(sol,src,c,n,kmax,nx) 
 
         implicit none
 
@@ -23,12 +23,12 @@
         integer(8), intent(out)   :: n
         integer(8), intent(out)   :: nx
         integer(8), intent(out)   :: kmax
-        real(8),    intent(out)   :: q
+        integer(8), intent(out)   :: src
         real(8),    intent(out)   :: c(2)
 
         open(unit=1,file='input',action='read',status='unknown')
         read(1,*) sol
-        read(1,*) q
+        read(1,*) src
         read(1,*) c(1)
         read(1,*) c(2)
         read(1,*) n
@@ -39,7 +39,7 @@
 
       end subroutine read_input
 
-      subroutine solve_slab(sol,q,c,n,kmax,nx) 
+      subroutine solve_slab(sol,src,c,n,kmax,nx) 
 
         implicit none
 
@@ -47,7 +47,7 @@
         integer(8), intent(in)    :: n
         integer(8), intent(in)    :: nx
         integer(8), intent(in)    :: sol
-        real(8),    intent(in)    :: q
+        integer(8), intent(in)    :: src
         real(8),    intent(in)    :: c(2)
 
         integer(8)                :: j
@@ -55,11 +55,16 @@
         real(8)                   :: eps
         real(8)                   :: h
         real(8)                   :: x
+        real(8)                   :: xm
+        real(8)                   :: xp
+        real(8)                   :: xj
         real(8)                   :: xmax
         real(8)                   :: xref
+        real(8)                   :: pi
         real(8)                   :: mu(n/2)
         real(8)                   :: w (n/2)
         real(8), allocatable      :: phi (:)
+        real(8), allocatable      :: q   (:)
         real(8), allocatable      :: sigt(:)
         real(8), allocatable      :: sigs(:)
         real(8), allocatable      :: xmsh(:)
@@ -71,16 +76,52 @@
         h   =xref/dble(nx)
         jmax=nint(xmax/h)
 
-      ! cross sections from Kord's problem
+      ! dynamic allocation of arrays
 
         allocate(phi(jmax))
+        allocate(q(jmax))
         allocate(sigt(jmax))
         allocate(sigs(jmax))
         allocate(xmsh(jmax))
         phi=0.0d0
+        q=0.0d0
         sigt=0.0d0
         sigs=0.0d0
         xmsh=0.0d0
+
+      ! build source based on options
+
+        if (src == 1) then      ! flat
+          q=1.0d0
+        elseif (src == 2) then  ! hat
+          do j=1,jmax
+            xm=h*dble(j-1)
+            xp=h*dble(j)
+            xj=0.5d0*(xp+xm)
+            q(j)=0.005d0*xj+0.95d0
+            if (j > jmax/2) q(j)=-0.005d0*xj+1.15d0
+          enddo
+        elseif (src == 3) then  ! cosine
+          pi=4.0d0*atan(1.0d0)
+          do j=1,jmax
+            xm=h*dble(j-1)
+            xp=h*dble(j)
+            xj=0.5d0*(xp+xm)
+            q(j)=20.0d0/h*(cos(pi*xm/40.0d0)-cos(pi*xp/40.0d0))
+          enddo
+        elseif (src == 4) then  ! linear
+          do j=1,jmax
+            xm=h*dble(j-1)
+            xp=h*dble(j)
+            xj=0.5d0*(xp+xm)
+            q(j)=xj/20.0d0
+          enddo
+        else
+          write(0,'(a)') ' Incorrect source option selected.'
+          stop
+        endif
+
+      ! cross sections from Kord's problem
 
         x=0.0d0
         do j=1,jmax
@@ -130,7 +171,7 @@
         integer(8), intent(in)    :: jmax
         integer(8), intent(in)    :: kmax
         real(8),    intent(in)    :: h
-        real(8),    intent(in)    :: q
+        real(8),    intent(in)    :: q(jmax)
         real(8),    intent(in)    :: eps
         real(8),    intent(in)    :: sigt(jmax)
         real(8),    intent(in)    :: sigs(jmax)
@@ -168,7 +209,7 @@
 
         do j=1,jmax
           phi(j)=1.0d0
-          s(j)  =0.5d0*(sigs(j)*phi(j)+q)
+          s(j)  =0.5d0*(sigs(j)*phi(j)+q(j))
         enddo
 
         psi_in=0.0d0
@@ -199,7 +240,7 @@
           if (merr < eps) exit
 
           do j=1,jmax
-            s(j)=0.5d0*(sigs(j)*phi(j)+q)
+            s(j)=0.5d0*(sigs(j)*phi(j)+q(j))
           enddo
         enddo
 
@@ -218,7 +259,7 @@
         integer(8), intent(in)    :: jmax
         integer(8), intent(in)    :: kmax
         real(8),    intent(in)    :: h
-        real(8),    intent(in)    :: q
+        real(8),    intent(in)    :: q(jmax)
         real(8),    intent(in)    :: eps
         real(8),    intent(in)    :: sigt(jmax)
         real(8),    intent(in)    :: sigs(jmax)
@@ -269,7 +310,7 @@
 
         do j=1,jmax
           phi(j)=1.0d0
-          s(j)  =0.5d0*(sigs(j)*phi(j)+q)
+          s(j)  =0.5d0*(sigs(j)*phi(j)+q(j))
         enddo
 
         psi_in=0.0d0
@@ -300,7 +341,7 @@
           if (merr < eps) exit
 
           do j=1,jmax
-            s(j)=0.5d0*(sigs(j)*phi(j)+q)
+            s(j)=0.5d0*(sigs(j)*phi(j)+q(j))
           enddo
         enddo
 
@@ -319,7 +360,7 @@
         integer(8), intent(in)    :: jmax
         integer(8), intent(in)    :: kmax
         real(8),    intent(in)    :: h
-        real(8),    intent(in)    :: q
+        real(8),    intent(in)    :: q(jmax)
         real(8),    intent(in)    :: eps
         real(8),    intent(in)    :: sigt(jmax)
         real(8),    intent(in)    :: sigs(jmax)
@@ -365,7 +406,7 @@
         do j=1,jmax
           phi(j) =1.0d0
           phil(j)=0.0d0
-          s (j)  =0.5d0*(sigs(j)*phi(j)+q)
+          s (j)  =0.5d0*(sigs(j)*phi(j)+q(j))
           sl(j)  =0.0d0
         enddo
 
@@ -404,7 +445,7 @@
           if (merr < eps) exit
 
           do j=1,jmax
-            s (j)=0.5d0*(sigs(j)*phi (j)+q)
+            s (j)=0.5d0*(sigs(j)*phi (j)+q(j))
             sl(j)=0.5d0*(sigs(j)*phil(j)  )
           enddo
         enddo
@@ -424,7 +465,7 @@
         integer(8), intent(in)    :: jmax
         integer(8), intent(in)    :: kmax
         real(8),    intent(in)    :: h
-        real(8),    intent(in)    :: q
+        real(8),    intent(in)    :: q(jmax)
         real(8),    intent(in)    :: eps
         real(8),    intent(in)    :: sigt(jmax)
         real(8),    intent(in)    :: sigs(jmax)
@@ -483,7 +524,7 @@
         do j=1,jmax
           phi(j) =1.0d0
           phil(j)=0.0d0
-          s (j)  =0.5d0*(sigs(j)*phi(j)+q)
+          s (j)  =0.5d0*(sigs(j)*phi(j)+q(j))
           sl(j)  =0.0d0
         enddo
 
@@ -522,7 +563,7 @@
           if (merr < eps) exit
 
           do j=1,jmax
-            s (j)=0.5d0*(sigs(j)*phi (j)+q)
+            s (j)=0.5d0*(sigs(j)*phi (j)+q(j))
             sl(j)=0.5d0*(sigs(j)*phil(j)  )
           enddo
         enddo

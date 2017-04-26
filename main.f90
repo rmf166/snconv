@@ -13,7 +13,7 @@
       integer(8)                :: xn
 
       do sol=0,3
-        do src=1,4
+        do src=1,2
           do s=1,3
             if (s == 1) then
               c(1)=0.99d0
@@ -33,12 +33,22 @@
             enddo
           enddo
         enddo
+        do src=3,4
+          s=1
+          c=0.98d0
+          n=6
+          kmax=10000
+          do xn=1,12
+            nx=5*2**(xn-1)
+            call solve_slab(sol,src,s,c,n,kmax,xn,nx) 
+          enddo
+        enddo
       enddo
 
       ! reference case (nx=20)
 
       sol=0
-      do src=1,4
+      do src=1,2
         do s=1,3
           if (s == 1) then
             c(1)=0.99d0
@@ -55,6 +65,14 @@
           nx=5*2**(20-1)
           call solve_slab(sol,src,s,c,n,kmax,xn,nx) 
         enddo
+      enddo
+      do src=3,4
+        s=1
+        c=0.98d0
+        n=6
+        kmax=10000
+        nx=5*2**(20-1)
+        call solve_slab(sol,src,s,c,n,kmax,xn,nx) 
       enddo
 
       contains
@@ -157,8 +175,7 @@
             q (j)=xj/20.0d0
             ql(j)=h/40.0d0
           enddo
-          bc(1)=1
-          bc(2)=0
+          bc=0
         else
           write(0,'(a)') ' Incorrect source option selected.'
           stop
@@ -181,7 +198,7 @@
 
       ! solve fixed-source problem
 
-        eps=1.0d-15
+        eps=5.0d-15
         if (sol == 0) then
           call solve_dd(n,jmax,kmax,h,q,eps,sigt,sigs,mu,w,bc,phi)
         elseif (sol == 1) then

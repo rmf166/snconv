@@ -74,6 +74,7 @@
 
         integer(8)                :: j
         integer(8)                :: jmax
+        integer(8)                :: bc(2)
         real(8)                   :: eps
         real(8)                   :: h
         real(8)                   :: x
@@ -95,7 +96,7 @@
         character(1)              :: srcopt
         character(1)              :: solopt
         character(2)              :: xnopt
-        character(13)             :: output
+        character(13)             :: datafile
 
       ! mesh slab geometry
 
@@ -123,6 +124,7 @@
 
         if (src == 1) then      ! flat
           q=1.0d0
+          bc=1
         elseif (src == 2) then  ! hat
           do j=1,jmax
             xm=h*dble(j-1)
@@ -135,6 +137,7 @@
               ql(j)=-0.0025d0*h
             endif
           enddo
+          bc=1
         elseif (src == 3) then  ! cosine
           pi=4.0d0*atan(1.0d0)
           do j=1,jmax
@@ -145,6 +148,7 @@
             ql(j)=-120.0d0/(pi*h*h)*cos(pi*xj/40.0d0)*&
                   (pi*h*cos(pi*h/80.0d0)-80.0d0*sin(pi*h/80.0d0))
           enddo
+          bc=1
         elseif (src == 4) then  ! linear
           do j=1,jmax
             xm=h*dble(j-1)
@@ -153,6 +157,8 @@
             q (j)=xj/20.0d0
             ql(j)=h/40.0d0
           enddo
+          bc(1)=1
+          bc(2)=0
         else
           write(0,'(a)') ' Incorrect source option selected.'
           stop
@@ -162,7 +168,7 @@
 
         x=0.0d0
         do j=1,jmax
-          xmsh(j)=x+h
+          xmsh(j)=x+0.5d0*h
           x=x+h
           sigt(j)=1.0d0
           sigs(j)=c(1)*sigt(j)
@@ -175,15 +181,15 @@
 
       ! solve fixed-source problem
 
-        eps=5.0d-16
+        eps=1.0d-15
         if (sol == 0) then
-          call solve_dd(n,jmax,kmax,h,q,eps,sigt,sigs,mu,w,phi)
+          call solve_dd(n,jmax,kmax,h,q,eps,sigt,sigs,mu,w,bc,phi)
         elseif (sol == 1) then
-          call solve_sc(n,jmax,kmax,h,q,eps,sigt,sigs,mu,w,phi)
+          call solve_sc(n,jmax,kmax,h,q,eps,sigt,sigs,mu,w,bc,phi)
         elseif (sol == 2) then
-          call solve_ld(n,jmax,kmax,h,q,ql,eps,sigt,sigs,mu,w,phi)
+          call solve_ld(n,jmax,kmax,h,q,ql,eps,sigt,sigs,mu,w,bc,phi)
         elseif (sol == 3) then
-          call solve_lc(n,jmax,kmax,h,q,ql,eps,sigt,sigs,mu,w,phi)
+          call solve_lc(n,jmax,kmax,h,q,ql,eps,sigt,sigs,mu,w,bc,phi)
         else
           write(0,'(a)') ' Incorrect solution scheme selected.'
           stop
@@ -195,11 +201,10 @@
         write(solopt,'(i1)') sol
         write(srcopt,'(i1)') src
         write(xnopt, '(i2)') xn
-        output='p'//prbopt//'-'//srcopt//'-'//solopt//'-'//trim(adjustl(xnopt))//'.out'
-        open(unit=1,file=output,action='write',status='unknown')
-        write(1,*) jmax
+        datafile='p'//prbopt//'-'//srcopt//'-'//solopt//'-'//trim(adjustl(xnopt))//'.dat'
+        open(unit=1,file=datafile,action='write',status='unknown')
         do j=1,jmax
-          write(1,*) phi(j)
+          write(1,'(3(es25.16))') xmsh(j),phi(j),q(j)
         enddo
         close(1)
 
@@ -214,13 +219,14 @@
 
       end subroutine solve_slab
 
-      subroutine solve_dd(n,jmax,kmax,h,q,eps,sigt,sigs,mu,w,phi)
+      subroutine solve_dd(n,jmax,kmax,h,q,eps,sigt,sigs,mu,w,bc,phi)
 
         implicit none
 
         integer(8), intent(in)    :: n
         integer(8), intent(in)    :: jmax
         integer(8), intent(in)    :: kmax
+        integer(8), intent(in)    :: bc(2)
         real(8),    intent(in)    :: h
         real(8),    intent(in)    :: q(jmax)
         real(8),    intent(in)    :: eps
@@ -275,11 +281,13 @@
           phi =0.0d0
           do m=1,n/2
             psi_in=psi_bc(m) ! left specular bc
+            if (bc(1) == 0) psi_in=0.0d0
             do j=1,jmax
               psi =(s(j)*c2(j,m)+psi_in)/(1.0d0+c1(j,m))
               phi(j)=phi(j)+psi*w(m)
               psi_in=2.0d0*psi-psi_in
             enddo
+            if (bc(2) == 0) psi_in=0.0d0
             do j=jmax,1,-1
               psi =(s(j)*c2(j,m)+psi_in)/(1.0d0+c1(j,m))
               phi(j)=phi(j)+psi*w(m)
@@ -311,13 +319,14 @@
 
       end subroutine solve_dd
 
-      subroutine solve_sc(n,jmax,kmax,h,q,eps,sigt,sigs,mu,w,phi)
+      subroutine solve_sc(n,jmax,kmax,h,q,eps,sigt,sigs,mu,w,bc,phi)
 
         implicit none
 
         integer(8), intent(in)    :: n
         integer(8), intent(in)    :: jmax
         integer(8), intent(in)    :: kmax
+        integer(8), intent(in)    :: bc(2)
         real(8),    intent(in)    :: h
         real(8),    intent(in)    :: q(jmax)
         real(8),    intent(in)    :: eps
@@ -386,11 +395,13 @@
           phi =0.0d0
           do m=1,n/2
             psi_in=psi_bc(m) ! left specular bc
+            if (bc(1) == 0) psi_in=0.0d0
             do j=1,jmax
               psi=(s(j)*c2(j,m)+psi_in)/(1.0d0+c1(j,m))
               phi(j)=phi(j)+psi*w(m)
               psi_in=(2.0d0*psi-(1.0d0-alpha(j,m))*psi_in)/(1.0d0+alpha(j,m))
             enddo
+            if (bc(2) == 0) psi_in=0.0d0
             do j=jmax,1,-1
               psi=(s(j)*c2(j,m)+psi_in)/(1.0d0+c1(j,m))
               phi(j)=phi(j)+psi*w(m)
@@ -423,13 +434,14 @@
 
       end subroutine solve_sc
 
-      subroutine solve_ld(n,jmax,kmax,h,q,ql,eps,sigt,sigs,mu,w,phi)
+      subroutine solve_ld(n,jmax,kmax,h,q,ql,eps,sigt,sigs,mu,w,bc,phi)
 
         implicit none
 
         integer(8), intent(in)    :: n
         integer(8), intent(in)    :: jmax
         integer(8), intent(in)    :: kmax
+        integer(8), intent(in)    :: bc(2)
         real(8),    intent(in)    :: h
         real(8),    intent(in)    :: q(jmax)
         real(8),    intent(in)    :: ql(jmax)
@@ -498,6 +510,7 @@
           phil=0.0d0
           do m=1,n/2
             psi_in=psi_bc(m) ! left specular bc
+            if (bc(1) == 0) psi_in=0.0d0
             do j=1,jmax
               psi_out=c2(j,m)*(2.0d0*(s(j)+alpha(j,m)*sl(j))/sigt(j)+c1(j,m)*psi_in)
               psi=((1.0d0+alpha(j,m))*psi_out+(1.0d0-alpha(j,m))*psi_in)/2.0d0-alpha(j,m)*sl(j)/sigt(j)
@@ -506,6 +519,7 @@
               phi(j)=phi(j) +psi*w(m)
               phil(j)=phil(j)+psil*w(m)
             enddo
+            if (bc(2) == 0) psi_in=0.0d0
             do j=jmax,1,-1
               psi_out=c2(j,m)*(2.0d0*(s(j)-alpha(j,m)*sl(j))/sigt(j)+c1(j,m)*psi_in)
               psi=((1.0d0+alpha(j,m))*psi_out+(1.0d0-alpha(j,m))*psi_in)/2.0d0+alpha(j,m)*sl(j)/sigt(j)
@@ -544,13 +558,14 @@
 
       end subroutine solve_ld
 
-      subroutine solve_lc(n,jmax,kmax,h,q,ql,eps,sigt,sigs,mu,w,phi)
+      subroutine solve_lc(n,jmax,kmax,h,q,ql,eps,sigt,sigs,mu,w,bc,phi)
 
         implicit none
 
         integer(8), intent(in)    :: n
         integer(8), intent(in)    :: jmax
         integer(8), intent(in)    :: kmax
+        integer(8), intent(in)    :: bc(2)
         real(8),    intent(in)    :: h
         real(8),    intent(in)    :: q(jmax)
         real(8),    intent(in)    :: ql(jmax)
@@ -633,6 +648,7 @@
           phil=0.0d0
           do m=1,n/2
             psi_in=psi_bc(m) ! left specular bc
+            if (bc(1) == 0) psi_in=0.0d0
             do j=1,jmax
               psi_out=c2(j,m)*(2.0d0*(s(j)+alpha(j,m)*sl(j))/sigt(j)+c1(j,m)*psi_in)
               psi=((1.0d0+alpha(j,m))*psi_out+(1.0d0-alpha(j,m))*psi_in)/2.0d0-alpha(j,m)*sl(j)/sigt(j)
@@ -641,6 +657,7 @@
               phi(j) =phi(j) +psi*w(m)
               phil(j)=phil(j)+psil*w(m)
             enddo
+            if (bc(2) == 0) psi_in=0.0d0
             do j=jmax,1,-1
               psi_out=c2(j,m)*(2.0d0*(s(j)-alpha(j,m)*sl(j))/sigt(j)+c1(j,m)*psi_in)
               psi=((1.0d0+alpha(j,m))*psi_out+(1.0d0-alpha(j,m))*psi_in)/2.0d0+alpha(j,m)*sl(j)/sigt(j)

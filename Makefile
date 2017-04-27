@@ -10,9 +10,9 @@ FFLAGS = -O0 -g -fconvert=big-endian -fno-automatic -fbacktrace \
 #F90    = ifort
 #FFLAGS = -g -C -traceback -mkl
 
-snsol.exe : main.f90
-	$(F90) $(FFLAGS) -o snsol.exe main.f90
+solver.exe : main.f90
+	$(F90) $(FFLAGS) -o solver.exe main.f90
 
 clean:
-	rm -f snsol.exe *.mod *.o
+	rm -f solver.exe *.mod *.o
 

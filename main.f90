@@ -11,8 +11,15 @@
 
       integer(8)                :: s
       integer(8)                :: xn
+      integer(8)                :: xnmax
 
       do sol=0,3
+        xnmax=12
+        if (sol == 2) then
+          xnmax=9
+        elseif (sol == 3) then
+          xnmax=7
+        endif
         do src=1,2
           do s=1,3
             if (s == 1) then
@@ -27,7 +34,7 @@
             endif
             n=6
             kmax=10000
-            do xn=1,12
+            do xn=1,xnmax
               nx=5*2**(xn-1)
               call solve_slab(sol,src,s,c,n,kmax,xn,nx) 
             enddo

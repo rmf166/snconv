@@ -2,16 +2,16 @@
 
       implicit none
 
-      integer(8)                :: sol
-      integer(8)                :: n
-      integer(8)                :: kmax
-      integer(8)                :: nx
-      integer(8)                :: src
+      integer(4)                :: sol
+      integer(4)                :: n
+      integer(4)                :: kmax
+      integer(4)                :: nx
+      integer(4)                :: src
       real(8)                   :: c(2)
 
-      integer(8)                :: s
-      integer(8)                :: xn
-      integer(8)                :: xnmax
+      integer(4)                :: s
+      integer(4)                :: xn
+      integer(4)                :: xnmax
 
       do sol=0,3
         xnmax=12
@@ -61,33 +61,34 @@
       ! reference case (nx=20)
 
       sol=0
-      do src=1,2
-        do s=1,3
-          if (s == 1) then
-            c(1)=0.99d0
-            c(2)=0.98d0
-          elseif (s == 2) then 
-            c(1)=0.95d0
-            c(2)=0.90d0
-          elseif (s == 3) then 
-            c(1)=0.75d0
-            c(2)=0.50d0
-          endif
+      do src=1,1!4
+        if (src == 1 .or. src == 2) then
+          do s=1,1!3
+            if (s == 1) then
+              c(1)=0.99d0
+              c(2)=0.98d0
+            elseif (s == 2) then 
+              c(1)=0.95d0
+              c(2)=0.90d0
+            elseif (s == 3) then 
+              c(1)=0.75d0
+              c(2)=0.50d0
+            endif
+            n=6
+            kmax=10000
+            xn=20
+            nx=5*2**(xn-1)
+            call solve_slab(sol,src,s,c,n,kmax,xn,nx) 
+          enddo
+        elseif (src == 3 .or. src == 4) then
+          s=1
+          c=0.98d0
           n=6
           kmax=10000
           xn=20
           nx=5*2**(xn-1)
           call solve_slab(sol,src,s,c,n,kmax,xn,nx) 
-        enddo
-      enddo
-      do src=3,4
-        s=1
-        c=0.98d0
-        n=6
-        kmax=10000
-        xn=20
-        nx=5*2**(xn-1)
-        call solve_slab(sol,src,s,c,n,kmax,xn,nx) 
+        endif
       enddo
 
       contains
@@ -96,18 +97,18 @@
 
         implicit none
 
-        integer(8), intent(in)    :: sol
-        integer(8), intent(in)    :: src
-        integer(8), intent(in)    :: s
-        integer(8), intent(in)    :: n
-        integer(8), intent(in)    :: kmax
-        integer(8), intent(in)    :: xn
-        integer(8), intent(in)    :: nx
+        integer(4), intent(in)    :: sol
+        integer(4), intent(in)    :: src
+        integer(4), intent(in)    :: s
+        integer(4), intent(in)    :: n
+        integer(4), intent(in)    :: kmax
+        integer(4), intent(in)    :: xn
+        integer(4), intent(in)    :: nx
         real(8),    intent(in)    :: c(2)
 
-        integer(8)                :: j
-        integer(8)                :: jmax
-        integer(8)                :: bc(2)
+        integer(4)                :: j
+        integer(4)                :: jmax
+        integer(4)                :: bc(2)
         real(8)                   :: eps
         real(8)                   :: h
         real(8)                   :: x
@@ -255,10 +256,10 @@
 
         implicit none
 
-        integer(8), intent(in)    :: n
-        integer(8), intent(in)    :: jmax
-        integer(8), intent(in)    :: kmax
-        integer(8), intent(in)    :: bc(2)
+        integer(4), intent(in)    :: n
+        integer(4), intent(in)    :: jmax
+        integer(4), intent(in)    :: kmax
+        integer(4), intent(in)    :: bc(2)
         real(8),    intent(in)    :: h
         real(8),    intent(in)    :: q(jmax)
         real(8),    intent(in)    :: eps
@@ -268,9 +269,9 @@
         real(8),    intent(in)    :: w (n/2)
         real(8),    intent(out)   :: phi (jmax)
 
-        integer(8)                :: j
-        integer(8)                :: k
-        integer(8)                :: m
+        integer(4)                :: j
+        integer(4)                :: k
+        integer(4)                :: m
         real(8)                   :: tau
         real(8)                   :: merr
         real(8)                   :: psi
@@ -355,10 +356,10 @@
 
         implicit none
 
-        integer(8), intent(in)    :: n
-        integer(8), intent(in)    :: jmax
-        integer(8), intent(in)    :: kmax
-        integer(8), intent(in)    :: bc(2)
+        integer(4), intent(in)    :: n
+        integer(4), intent(in)    :: jmax
+        integer(4), intent(in)    :: kmax
+        integer(4), intent(in)    :: bc(2)
         real(8),    intent(in)    :: h
         real(8),    intent(in)    :: q(jmax)
         real(8),    intent(in)    :: eps
@@ -368,9 +369,9 @@
         real(8),    intent(in)    :: w (n/2)
         real(8),    intent(out)   :: phi (jmax)
 
-        integer(8)                :: j
-        integer(8)                :: k
-        integer(8)                :: m
+        integer(4)                :: j
+        integer(4)                :: k
+        integer(4)                :: m
         real(8)                   :: tau
         real(8)                   :: tau3
         real(8)                   :: tau5
@@ -470,10 +471,10 @@
 
         implicit none
 
-        integer(8), intent(in)    :: n
-        integer(8), intent(in)    :: jmax
-        integer(8), intent(in)    :: kmax
-        integer(8), intent(in)    :: bc(2)
+        integer(4), intent(in)    :: n
+        integer(4), intent(in)    :: jmax
+        integer(4), intent(in)    :: kmax
+        integer(4), intent(in)    :: bc(2)
         real(8),    intent(in)    :: h
         real(8),    intent(in)    :: q(jmax)
         real(8),    intent(in)    :: ql(jmax)
@@ -484,9 +485,9 @@
         real(8),    intent(in)    :: w (n/2)
         real(8),    intent(out)   :: phi (jmax)
 
-        integer(8)                :: j
-        integer(8)                :: k
-        integer(8)                :: m
+        integer(4)                :: j
+        integer(4)                :: k
+        integer(4)                :: m
         real(8)                   :: tau
         real(8)                   :: merr
         real(8)                   :: psi
@@ -594,10 +595,10 @@
 
         implicit none
 
-        integer(8), intent(in)    :: n
-        integer(8), intent(in)    :: jmax
-        integer(8), intent(in)    :: kmax
-        integer(8), intent(in)    :: bc(2)
+        integer(4), intent(in)    :: n
+        integer(4), intent(in)    :: jmax
+        integer(4), intent(in)    :: kmax
+        integer(4), intent(in)    :: bc(2)
         real(8),    intent(in)    :: h
         real(8),    intent(in)    :: q(jmax)
         real(8),    intent(in)    :: ql(jmax)
@@ -608,9 +609,9 @@
         real(8),    intent(in)    :: w (n/2)
         real(8),    intent(out)   :: phi (jmax)
 
-        integer(8)                :: j
-        integer(8)                :: k
-        integer(8)                :: m
+        integer(4)                :: j
+        integer(4)                :: k
+        integer(4)                :: m
         real(8)                   :: tau
         real(8)                   :: tau3
         real(8)                   :: tau5
@@ -733,53 +734,98 @@
 
         implicit none
 
-        integer(8), intent(in)    :: n
+        integer(4), intent(in)    :: n
         real(8),    intent(out)   :: mu(n/2)
         real(8),    intent(out)   :: w (n/2)
 
-        if (n == 2) then
-          mu(1)=0.5773502691d0
-          w (1)=1.0000000000d0
-        elseif (n == 4) then
-          mu(1)=0.3399810435d0
-          w (1)=0.6521451549d0
-          mu(2)=0.8611363115d0
-          w (2)=0.3478548451d0
-        elseif (n == 6) then
-          mu(1)=0.2386191860d0
-          w (1)=0.4679139346d0
-          mu(2)=0.6612093864d0
-          w (2)=0.3607615730d0
-          mu(3)=0.9324695142d0
-          w (3)=0.1713244924d0
-        elseif (n == 8) then
-          mu(1)=0.1834346424d0
-          w (1)=0.3626837834d0
-          mu(2)=0.5255324099d0
-          w (2)=0.3137066459d0
-          mu(3)=0.7966664774d0
-          w (3)=0.2223810344d0
-          mu(4)=0.9602898564d0
-          w (4)=0.1012285363d0
-        elseif (n == 16) then
-          mu(1)=0.0950125098d0
-          w (1)=0.1894506105d0
-          mu(2)=0.2816035508d0
-          w (2)=0.1826034150d0
-          mu(3)=0.4580167777d0
-          w (3)=0.1691565194d0
-          mu(4)=0.6178762444d0
-          w (4)=0.1495959888d0
-          mu(5)=0.7554044084d0
-          w (5)=0.1246289713d0
-          mu(6)=0.8656312024d0
-          w (6)=0.0951585117d0
-          mu(7)=0.9445750231d0
-          w (7)=0.0622535239d0
-          mu(8)=0.9894009350d0
-          w (8)=0.0271524594d0
-        endif
+        integer(4)                :: j
+        integer(4), parameter     :: nmaxp=300
+        real(8)                   :: xnew(nmaxp)
+        real(8)                   :: wnew(nmaxp)
+
+        xnew=0.0d0
+        wnew=0.0d0
+        call gauleg(-1.0d0,1.0d0,xnew,wnew,n)
+
+        do j=1,n/2
+          mu(j)=xnew(j)
+          w(j) =wnew(j)
+        enddo
 
       end subroutine quad
+
+      subroutine gauleg(x1,x2,x,w,n)
+ 
+        implicit none
+
+        integer(4), intent(in)    :: n
+        real(8),    intent(in)    :: x1
+        real(8),    intent(in)    :: x2
+        real(8),    intent(inout) :: x(n)
+        real(8),    intent(inout) :: w(n)
+
+        integer(4)                :: i
+        integer(4)                :: j
+        integer(4)                :: m
+        integer(4)                :: kount
+        integer(4), parameter     :: nmax=300
+        real(8)                   :: xm
+        real(8)                   :: xl
+        real(8)                   :: p1
+        real(8)                   :: p2
+        real(8)                   :: p3
+        real(8)                   :: pi
+        real(8)                   :: pp
+        real(8)                   :: z
+        real(8)                   :: z1
+        real(8)                   :: xtmp(nmax)  ! full set of abscissas
+        real(8)                   :: wtmp(nmax)  ! full set of weights
+        real(8),    parameter     :: eps=1.0d-15
+
+        pi=4.0d0*atan(1.0d0)
+
+        if (n > nmax) then
+          write(0,'(a,1i6)') 'Gauss-Leg. integration problem --Increase PARAMETER: NMAX to at least:',n
+          stop
+        endif
+
+        m=(n+1)/2
+        xm=0.5d0*(x2+x1)
+        xl=0.5d0*(x2-x1)
+
+        do i=1,m
+          z=cos(pi*(i-0.25d0)/(n+0.5d0))
+      1   continue
+          p1=1.d0
+          p2=0.d0
+          do j=1,n
+            p3=p2
+            p2=p1
+            p1=((2.0d0*j-1.0d0)*z*p2-(j-1.0d0)*p3)/j
+          enddo
+      !   p1 is now the desired Legendre polynomial. we next compute pp, its derivative,
+      !   by a standard relation involving also p2, the polynomial of one lower order.
+          pp=n*(z*p1-p2)/(z*z-1.0d0)
+          z1=z
+          z=z1-p1/pp
+          if (abs(z-z1) > eps) go to 1
+          xtmp(i)=    xm-xl*z
+          xtmp(n+1-i)=xm+xl*z
+      !   the (n+1-i) terms are the symmetric counterparts
+          wtmp(i)=2.d0*xl/((1.d0-z*z)*pp*pp)
+          wtmp(n+1-i)=wtmp(i)
+        enddo
+
+      ! (half set and assumed symmetric)
+        kount=0
+        do i=1,n
+          if (xtmp(i) >= 0.0) then
+            kount=kount+1
+            x(kount)=xtmp(i)   ! abscissas
+            w(kount)=wtmp(i)   ! weights
+          endif
+        enddo
+
+      end subroutine gauleg
 
     end program main

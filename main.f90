@@ -62,7 +62,8 @@
           endif
           n=6
           kmax=10000
-          nx=5*2**(20-1)
+          xn=20
+          nx=5*2**(xn-1)
           call solve_slab(sol,src,s,c,n,kmax,xn,nx) 
         enddo
       enddo
@@ -71,7 +72,8 @@
         c=0.98d0
         n=6
         kmax=10000
-        nx=5*2**(20-1)
+        xn=20
+        nx=5*2**(xn-1)
         call solve_slab(sol,src,s,c,n,kmax,xn,nx) 
       enddo
 

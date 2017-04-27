@@ -45,7 +45,13 @@
           c=0.98d0
           n=6
           kmax=10000
-          do xn=1,12
+          xnmax=12
+          if (sol == 2) then
+            xnmax=9
+          elseif (sol == 3) then
+            xnmax=7
+          endif
+          do xn=1,xnmax
             nx=5*2**(xn-1)
             call solve_slab(sol,src,s,c,n,kmax,xn,nx) 
           enddo
@@ -324,7 +330,7 @@
 
           merr=0.0d0
           do j=1,jmax
-            merr=max(merr,abs((phi(j)-phio(j))/(phio(j)+1.0d-20)))
+            merr=max(merr,abs((phi(j)-phio(j))/(phi(j)+1.0d-20)))
           enddo
           if (merr < eps) exit
 

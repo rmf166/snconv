@@ -2,104 +2,113 @@
 
       implicit none
 
-      integer(4)                :: sol
-      integer(4)                :: n
-      integer(4)                :: kmax
-      integer(4)                :: nx
-      integer(4)                :: src
-      real(8)                   :: c(2)
+      call drive
 
-      integer(4)                :: s
-      integer(4)                :: xn
-      integer(4)                :: xnmax
+      contains
 
-      do sol=0,3
-        xnmax=12
-        if (sol == 2) then
-          xnmax=9
-        elseif (sol == 3) then
-          xnmax=7
-        endif
-        do src=1,2
-          do s=1,3
-            if (s == 1) then
-              c(1)=0.99d0
-              c(2)=0.98d0
-            elseif (s == 2) then 
-              c(1)=0.95d0
-              c(2)=0.90d0
-            elseif (s == 3) then 
-              c(1)=0.75d0
-              c(2)=0.50d0
-            endif
-            n=6
-            kmax=10000
-            do xn=1,xnmax
-              nx=5*2**(xn-1)
-              call solve_slab(sol,src,s,c,n,kmax,xn,nx) 
-            enddo
-          enddo
-        enddo
-        do src=3,4
-          s=1
-          c=0.98d0
-          n=6
-          kmax=10000
+      subroutine drive
+
+        implicit none
+
+        integer(4)                :: sol
+        integer(4)                :: n
+        integer(4)                :: kmax
+        integer(4)                :: nx
+        integer(4)                :: src
+        real(8)                   :: c(2)
+
+        integer(4)                :: prb
+        integer(4)                :: xn
+        integer(4)                :: xnmax
+        integer(4), parameter     :: xnr=18
+
+        do sol=0,3
           xnmax=12
           if (sol == 2) then
             xnmax=9
           elseif (sol == 3) then
             xnmax=7
           endif
-          do xn=1,xnmax
-            nx=5*2**(xn-1)
-            call solve_slab(sol,src,s,c,n,kmax,xn,nx) 
+          do src=1,2
+            do prb=1,3
+              if (prb == 1) then
+                c(1)=0.99d0
+                c(2)=0.98d0
+              elseif (prb == 2) then 
+                c(1)=0.95d0
+                c(2)=0.90d0
+              elseif (prb == 3) then 
+                c(1)=0.75d0
+                c(2)=0.50d0
+              endif
+              n=6
+              kmax=10000
+              do xn=1,xnmax
+                nx=5*2**(xn-1)
+                call solve_slab(sol,src,prb,c,n,kmax,xn,nx) 
+              enddo
+            enddo
           enddo
-        enddo
-      enddo
-
-      ! reference case (nx=20)
-
-      sol=0
-      do src=1,1!4
-        if (src == 1 .or. src == 2) then
-          do s=1,1!3
-            if (s == 1) then
-              c(1)=0.99d0
-              c(2)=0.98d0
-            elseif (s == 2) then 
-              c(1)=0.95d0
-              c(2)=0.90d0
-            elseif (s == 3) then 
-              c(1)=0.75d0
-              c(2)=0.50d0
-            endif
+          do src=3,4
+            prb=1
+            c=0.98d0
             n=6
             kmax=10000
-            xn=20
-            nx=5*2**(xn-1)
-            call solve_slab(sol,src,s,c,n,kmax,xn,nx) 
+            xnmax=12
+            if (sol == 2) then
+              xnmax=9
+            elseif (sol == 3) then
+              xnmax=7
+            endif
+            do xn=1,xnmax
+              nx=5*2**(xn-1)
+              call solve_slab(sol,src,prb,c,n,kmax,xn,nx) 
+            enddo
           enddo
-        elseif (src == 3 .or. src == 4) then
-          s=1
-          c=0.98d0
-          n=6
-          kmax=10000
-          xn=20
-          nx=5*2**(xn-1)
-          call solve_slab(sol,src,s,c,n,kmax,xn,nx) 
-        endif
-      enddo
+        enddo
 
-      contains
+      ! reference case (nxr) using dd (sol=0)
 
-      subroutine solve_slab(sol,src,s,c,n,kmax,xn,nx) 
+        sol=0
+        do src=1,4
+          if (src == 1 .or. src == 2) then
+            do prb=1,3
+              if (prb == 1) then
+                c(1)=0.99d0
+                c(2)=0.98d0
+              elseif (prb == 2) then 
+                c(1)=0.95d0
+                c(2)=0.90d0
+              elseif (prb == 3) then 
+                c(1)=0.75d0
+                c(2)=0.50d0
+              endif
+              n=6
+              kmax=10000
+              xn=xnr
+              nx=5*2**(xn-1)
+              call solve_slab(sol,src,prb,c,n,kmax,xn,nx) 
+            enddo
+          elseif (src == 3 .or. src == 4) then
+            prb=1
+            c=0.98d0
+            n=6
+            kmax=10000
+            xn=xnr
+            nx=5*2**(xn-1)
+            call solve_slab(sol,src,prb,c,n,kmax,xn,nx) 
+          endif
+        enddo
+
+      end subroutine drive
+
+      subroutine solve_slab(sol,src,prb,c,n,kmax,xn,nx) 
 
         implicit none
 
         integer(4), intent(in)    :: sol
         integer(4), intent(in)    :: src
-        integer(4), intent(in)    :: s
+        integer(4), intent(in)    :: prb
         integer(4), intent(in)    :: n
         integer(4), intent(in)    :: kmax
         integer(4), intent(in)    :: xn
@@ -197,7 +206,7 @@
           stop
         endif
 
-      ! cross sections from Kord's problem
+      ! set cross sections from Kord's problem
 
         x=0.0d0
         do j=1,jmax
@@ -214,7 +223,7 @@
 
       ! solve fixed-source problem
 
-        eps=5.0d-15
+        eps=1.0d-15
         if (sol == 0) then
           call solve_dd(n,jmax,kmax,h,q,eps,sigt,sigs,mu,w,bc,phi)
         elseif (sol == 1) then
@@ -230,7 +239,7 @@
 
       ! write flux solution into file
 
-        write(prbopt,'(i1)') s
+        write(prbopt,'(i1)') prb
         write(solopt,'(i1)') sol
         write(srcopt,'(i1)') src
         write(xnopt, '(i2)') xn
@@ -404,7 +413,7 @@
               tau7=tau5*tau*tau
               alpha(j,m)=tau/6.0d0-tau3/360.0d0+tau5/15120.0d0-tau7/604800.0d0
             else
-              alpha(j,m)=1.0d0/tanh(tau/2.0d0)-2.0d0/tau
+              alpha(j,m)=1.0d0/dtanh(tau/2.0d0)-2.0d0/tau
             endif
             c1(j,m)=0.5d0*tau*(1.0d0+alpha(j,m))
             c2(j,m)=0.5d0*h  *(1.0d0+alpha(j,m))/mu(m)
@@ -445,7 +454,7 @@
 
           merr=0.0d0
           do j=1,jmax
-            merr=max(merr,abs((phi(j)-phio(j))/(phio(j)+1.0d-20)))
+            merr=max(merr,abs((phi(j)-phio(j))/(phi(j)+1.0d-20)))
           enddo
           if (merr < eps) exit
 
@@ -566,7 +575,7 @@
 
           merr=0.0d0
           do j=1,jmax
-            merr=max(merr,abs((phi(j)-phio(j))/(phio(j)+1.0d-20)))
+            merr=max(merr,abs((phi(j)-phio(j))/(phi(j)+1.0d-20)))
           enddo
           if (merr < eps) exit
 
@@ -651,7 +660,7 @@
               tau7=tau5*tau*tau
               alpha(j,m)=tau/6.0d0-tau3/360.0d0+tau5/15120.0d0-tau7/604800.0d0
             else
-              alpha(j,m)=1.0d0/tanh(tau/2.0d0)-2.0d0/tau
+              alpha(j,m)=1.0d0/dtanh(tau/2.0d0)-2.0d0/tau
             endif
             rbeta(j,m)=1.0d0/alpha(j,m)-6.0d0/tau
             c1(j,m)=      (2.0d0/tau+alpha(j,m)-1.0d0)
@@ -704,7 +713,7 @@
 
           merr=0.0d0
           do j=1,jmax
-            merr=max(merr,abs((phi(j)-phio(j))))
+            merr=max(merr,abs((phi(j)-phio(j))/(phi(j)+1.0d-20)))
           enddo
           if (merr < eps) exit
 

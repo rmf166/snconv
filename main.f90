@@ -127,6 +127,7 @@
         real(8)                   :: xmax
         real(8)                   :: xref
         real(8)                   :: pi
+        real(8)                   :: xnorm
         real(8)                   :: mu(n/2)
         real(8)                   :: w (n/2)
         real(8), allocatable      :: phi (:)
@@ -237,6 +238,15 @@
           stop
         endif
 
+      ! Renormalize results
+
+        xnorm=0.01d0
+        if (prb == 2) then
+          xnorm=0.05d0
+        elseif (prb == 3) then
+          xnorm=0.25d0
+        endif
+
       ! write flux solution into file
 
         write(prbopt,'(i1)') prb
@@ -246,7 +256,7 @@
         datafile='p'//prbopt//'-'//srcopt//'-'//solopt//'-'//trim(adjustl(xnopt))//'.dat'
         open(unit=1,file=datafile,action='write',status='unknown')
         do j=1,jmax
-          write(1,'(3(es25.16))') xmsh(j),phi(j),q(j)
+          write(1,'(3(es25.16))') xmsh(j),phi(j)*xnorm,q(j)
         enddo
         close(1)
 

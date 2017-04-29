@@ -20,7 +20,7 @@
         integer(4)                :: prb
         integer(4)                :: xn
         integer(4)                :: xnmax
-        integer(4), parameter     :: xnr=20
+        integer(4), parameter     :: xnr=18
 
         do sol=0,3
           xnmax=12

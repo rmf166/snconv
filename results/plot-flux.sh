@@ -17,7 +17,7 @@ do
       echo 'set title "Problem '${prb}'"' >> plot.p
       echo 'set size square' >> plot.p
       echo 'set xr [0:40]' >> plot.p
-      echo 'set key outside' >> plot.p
+      echo 'set key bottom right' >> plot.p
       echo 'set style line 1 lt 1 lc rgb "blue" lw 3' >> plot.p
       echo 'set style line 2 lt 1 lc rgb "green" lw 3' >> plot.p
       if [ "${sol}" = "dd" ]
@@ -63,7 +63,7 @@ do
     echo 'set title "Problem 1"' >> plot.p
     echo 'set size square' >> plot.p
     echo 'set xr [0:40]' >> plot.p
-    echo 'set key outside' >> plot.p
+    echo 'set key bottom right' >> plot.p
     echo 'set style line 1 lt 1 lc rgb "blue" lw 3' >> plot.p
     echo 'set style line 2 lt 1 lc rgb "green" lw 3' >> plot.p
     if [ "${sol}" = "dd" ]

@@ -210,7 +210,7 @@
         do jj=1,jmax2
           l2=l2+(phi2(jj)-phir2(jj))**2
         enddo
-        l2=dsqrt(l2/dble(jmax2))
+        l2=dsqrt(l2)
 
         deallocate(phi2)
         deallocate(phir2)

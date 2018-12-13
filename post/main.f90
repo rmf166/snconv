@@ -6,7 +6,8 @@
       integer(4)                :: prb
 
       do src=1,2
-        do prb=1,3
+        do prb=1,4
+          if (prb == 4 .and. src == 2) cycle
           call postp(src,prb) 
         enddo
       enddo
@@ -55,9 +56,14 @@
 
         xmax=40.0d0
         xref=10.0d0
+        if (prb == 4) then
+          xmax=6.0d0
+          xref=2.0d0
+        endif
 
         xn   =xnr
         nx   =5*2**(xn-1)
+        if (prb == 4) nx=100*2**(xn-1)
         hr   =xref/dble(nx)
         jmaxr=nint(xmax/hr)
         allocate(phir(jmaxr))
@@ -86,6 +92,7 @@
             write(srcopt,'(i1)') src
             write(xnopt, '(i2)') xn
             nx   =5*2**(xn-1)
+            if (prb == 4) nx=100*2**(xn-1)
             h(xn)=xref/dble(nx)
             jmax=nint(xmax/h(xn))
             allocate(phi(jmax))
@@ -96,7 +103,7 @@
                 read(1,'(2(es25.16))') xmsh,phi(j)
                 phi(j)=phi(j)
               enddo
-              if (.false.) then
+              if (prb == 4) then
                 call geterr(jmax,jmaxr,phi,phir,h(xn),hr,l2(xn,sol))
               else
                 call geterr2(jmax,jmaxr,xmax,phi,phir,h(xn),hr,l2(xn,sol))
@@ -145,9 +152,9 @@
             phirr(jj)=phirr(jj)+phir(jjj)*hr
           enddo
           phirr(jj)=phirr(jj)/h
-          l2=l2+((phi(jj)-phirr(jj))**2)
+          l2=l2+h*(phi(jj)-phirr(jj))**2
         enddo
-        l2=dsqrt(l2/dble(jmax))
+        l2=dsqrt(l2)
 
         deallocate(phirr)
 

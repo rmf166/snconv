@@ -2,8 +2,11 @@
 rm cord.pdf
 for src in 1 2
 do
-  for prb in 1 2 3
+  for prb in 1 2 3 4
   do
+    if [ ${src} == "2" ] && [ ${prb} == "4" ]; then
+    :
+    else
     rm plot.p
     echo 'set autoscale' >> plot.p
     echo 'set logscale xy' >> plot.p
@@ -19,7 +22,11 @@ do
     echo 'set title "Problem '${prb}'"' >> plot.p
     echo 'set size square' >> plot.p
     echo 'set pointsize 0.5' >> plot.p
+    if [ ${src} == "1" ] && [ ${prb} == "4" ]; then
+    echo 'set xr [1.0e-6:1.0e-1]' >> plot.p
+    else
     echo 'set xr [1.0e-4:10]' >> plot.p
+    fi
     echo 'set key top left' >> plot.p
     echo 'set key width -1' >> plot.p
     echo 'set key spacing 0.75' >> plot.p
@@ -41,6 +48,7 @@ do
     echo 'replot' >> plot.p
     echo 'set terminal x11' >> plot.p
     gnuplot plot.p
+    fi
   done  
 done
 for src in 3 4

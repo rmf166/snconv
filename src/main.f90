@@ -30,7 +30,8 @@
             xnmax=7
           endif
           do src=1,2
-            do prb=1,3
+            do prb=1,4
+              if (prb == 4 .and. src == 2) cycle
               if (prb == 1) then
                 c(1)=0.99d0
                 c(2)=0.98d0
@@ -40,11 +41,15 @@
               elseif (prb == 3) then 
                 c(1)=0.75d0
                 c(2)=0.50d0
+              elseif (prb == 4) then
+                c(1)=0.90d0
+                c(2)=0.60d0
               endif
               n=6
               kmax=10000
               do xn=1,xnmax
                 nx=5*2**(xn-1)
+                if (prb == 4) nx=100*2**(xn-1)
                 call solve_slab(sol,src,prb,c,n,kmax,xn,nx) 
               enddo
             enddo
@@ -72,7 +77,8 @@
         sol=0
         do src=1,4
           if (src == 1 .or. src == 2) then
-            do prb=1,3
+            do prb=1,4
+              if (prb == 4 .and. src == 2) cycle
               if (prb == 1) then
                 c(1)=0.99d0
                 c(2)=0.98d0
@@ -82,11 +88,15 @@
               elseif (prb == 3) then 
                 c(1)=0.75d0
                 c(2)=0.50d0
+              elseif (prb == 4) then
+                c(1)=0.90d0
+                c(2)=0.60d0
               endif
               n=6
               kmax=10000
               xn=xnr
               nx=5*2**(xn-1)
+              if (prb == 4) nx=100*2**(xn-1)
               call solve_slab(sol,src,prb,c,n,kmax,xn,nx) 
             enddo
           elseif (src == 3 .or. src == 4) then
@@ -146,6 +156,10 @@
 
         xmax=40.0d0
         xref=10.0d0
+        if (prb == 4) then
+          xmax=6.0d0
+          xref=2.0d0
+        endif
         h   =xref/dble(nx)
         jmax=nint(xmax/h)
 
@@ -169,6 +183,7 @@
         if (src == 1) then      ! flat
           q=1.0d0
           bc=1
+          if (prb == 4) bc=0
         elseif (src == 2) then  ! hat
           do j=1,jmax
             xm=h*dble(j-1)
@@ -215,7 +230,14 @@
           x=x+h
           sigt(j)=1.0d0
           sigs(j)=c(1)*sigt(j)
-          if (j > nx .and. j < 3*nx+1) sigs(j)=c(2)*sigt(j)
+          if (prb == 4) then
+            if (xmsh(j) > xref .and. xmsh(j) < xmax-xref) then
+              sigt(j)=100.0d0
+              sigs(j)=c(2)*sigt(j)
+            endif
+          else
+            if (j > nx .and. j < 3*nx+1) sigs(j)=c(2)*sigt(j)
+          endif
         enddo
 
       ! set quadrature
@@ -245,6 +267,8 @@
           xnorm=0.05d0
         elseif (prb == 3) then
           xnorm=0.25d0
+        elseif (prb == 4) then
+          xnorm=1.0d0
         endif
 
       ! write flux solution into file

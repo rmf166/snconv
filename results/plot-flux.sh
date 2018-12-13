@@ -4,8 +4,11 @@ for src in 1 2
 do
   for sol in dd sc ld lc
   do
-    for prb in 1 2 3
+    for prb in 1 2 3 4
     do
+      if [ ${src} == "2" ] && [ ${prb} == "4" ]; then
+      :
+      else
       rm plot.p
       echo 'set autoscale' >> plot.p
       echo 'unset logscale' >> plot.p
@@ -16,7 +19,11 @@ do
       echo 'set xlabel "Distance (cm)" enhanced' >> plot.p
       echo 'set title "Problem '${prb}'"' >> plot.p
       echo 'set size square' >> plot.p
-      echo 'set xr [0:40]' >> plot.p
+      if [ ${src} == "1" ] && [ ${prb} == "4" ]; then
+        echo 'set xr [0:6]' >> plot.p
+      else
+        echo 'set xr [0:40]' >> plot.p
+      fi
       echo 'set key bottom right' >> plot.p
       echo 'set style line 1 lt 1 lc rgb "blue" lw 3' >> plot.p
       echo 'set style line 2 lt 1 lc rgb "green" lw 3' >> plot.p
@@ -45,6 +52,7 @@ do
       echo 'replot' >> plot.p
       echo 'set terminal x11' >> plot.p
       gnuplot plot.p
+      fi
     done  
   done
 done

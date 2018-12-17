@@ -57,7 +57,7 @@
         xmax=40.0d0
         xref=10.0d0
         if (prb == 4) then
-          xmax=6.0d0
+          xmax=8.0d0
           xref=2.0d0
         endif
 

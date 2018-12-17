@@ -20,7 +20,7 @@ do
       echo 'set title "Problem '${prb}'"' >> plot.p
       echo 'set size square' >> plot.p
       if [ ${src} == "1" ] && [ ${prb} == "4" ]; then
-        echo 'set xr [0:6]' >> plot.p
+        echo 'set xr [0:8]' >> plot.p
       else
         echo 'set xr [0:40]' >> plot.p
       fi

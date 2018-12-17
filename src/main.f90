@@ -46,11 +46,12 @@
                 c(2)=0.60d0
               endif
               n=6
+              if (prb == 4) n=10
               kmax=10000
               do xn=1,xnmax
                 nx=5*2**(xn-1)
                 if (prb == 4) nx=100*2**(xn-1)
-                call solve_slab(sol,src,prb,c,n,kmax,xn,nx) 
+                call solve_slab(sol,src,prb,c,n,kmax,xn,nx)
               enddo
             enddo
           enddo
@@ -67,7 +68,7 @@
             endif
             do xn=1,xnmax
               nx=5*2**(xn-1)
-              call solve_slab(sol,src,prb,c,n,kmax,xn,nx) 
+              call solve_slab(sol,src,prb,c,n,kmax,xn,nx)
             enddo
           enddo
         enddo
@@ -93,11 +94,12 @@
                 c(2)=0.60d0
               endif
               n=6
+              if (prb == 4) n=10
               kmax=10000
               xn=xnr
               nx=5*2**(xn-1)
               if (prb == 4) nx=100*2**(xn-1)
-              call solve_slab(sol,src,prb,c,n,kmax,xn,nx) 
+              call solve_slab(sol,src,prb,c,n,kmax,xn,nx)
             enddo
           elseif (src == 3 .or. src == 4) then
             prb=1
@@ -106,7 +108,7 @@
             kmax=10000
             xn=xnr
             nx=5*2**(xn-1)
-            call solve_slab(sol,src,prb,c,n,kmax,xn,nx) 
+            call solve_slab(sol,src,prb,c,n,kmax,xn,nx)
           endif
         enddo
 
@@ -157,7 +159,7 @@
         xmax=40.0d0
         xref=10.0d0
         if (prb == 4) then
-          xmax=6.0d0
+          xmax=8.0d0
           xref=2.0d0
         endif
         h   =xref/dble(nx)

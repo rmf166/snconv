@@ -2,7 +2,7 @@
 rm cord.pdf
 for src in 1 2
 do
-  for prb in 1 2 3 4
+  for prb in 1 2 3
   do
     if [ ${src} == "2" ] && [ ${prb} == "4" ]; then
     :

@@ -12,7 +12,7 @@
 
     program main
 
-     implicit none
+      implicit none
 
       !$ call omp_set_num_threads(4)
 
@@ -350,6 +350,106 @@
 
       end subroutine solve_slab
 
+      subroutine quad(n,mu,w)
+
+        use global
+
+        implicit none
+
+        integer(4),    intent(in)    :: n
+        real(kind=kr), intent(out)   :: mu(n/2)
+        real(kind=kr), intent(out)   :: w (n/2)
+
+        integer(4)                   :: j
+        integer(4),    parameter     :: nmaxp=300
+        real(kind=kr)                :: xnew(nmaxp)
+        real(kind=kr)                :: wnew(nmaxp)
+
+        xnew=0.0_kr
+        wnew=0.0_kr
+        call gauleg(-1.0_kr,1.0_kr,xnew,wnew,n)
+
+        do j=1,n/2
+          mu(j)=xnew(j)
+          w(j) =wnew(j)
+        enddo
+
+      end subroutine quad
+
+      subroutine gauleg(x1,x2,x,w,n)
+ 
+        use global
+
+        implicit none
+
+        integer(4),    intent(in)    :: n
+        real(kind=kr), intent(in)    :: x1
+        real(kind=kr), intent(in)    :: x2
+        real(kind=kr), intent(inout) :: x(n)
+        real(kind=kr), intent(inout) :: w(n)
+
+        integer(4)                   :: i
+        integer(4)                   :: j
+        integer(4)                   :: m
+        integer(4)                   :: kount
+        integer(4),    parameter     :: nmax=300
+        real(kind=kr)                :: xm
+        real(kind=kr)                :: xl
+        real(kind=kr)                :: p1
+        real(kind=kr)                :: p2
+        real(kind=kr)                :: p3
+        real(kind=kr)                :: pi
+        real(kind=kr)                :: pp
+        real(kind=kr)                :: z
+        real(kind=kr)                :: z1
+        real(kind=kr)                :: xtmp(nmax)  ! full set of abscissas
+        real(kind=kr)                :: wtmp(nmax)  ! full set of weights
+        real(kind=kr), parameter     :: eps=1.0e-30
+
+        pi=4.0_kr*atan(1.0_kr)
+        if (n > nmax) then
+          write(0,'(a,1i6)') 'Gauss-Leg. integration problem --Increase PARAMETER: NMAX to at least:',n
+          stop
+        endif
+
+        m=(n+1)/2
+        xm=0.5_kr*(x2+x1)
+        xl=0.5_kr*(x2-x1)
+        do i=1,m
+          z=cos(pi*(i-0.25_kr)/(n+0.5_kr))
+      1   continue
+          p1=1.0_kr
+          p2=0.0_kr
+          do j=1,n
+            p3=p2
+            p2=p1
+            p1=((2.0_kr*j-1.0_kr)*z*p2-(j-1.0_kr)*p3)/j
+          enddo
+      !   p1 is now the desired Legendre polynomial. we next compute pp, its derivative,
+      !   by a standard relation involving also p2, the polynomial of one lower order.
+          pp=n*(z*p1-p2)/(z*z-1.0_kr)
+          z1=z
+          z=z1-p1/pp
+          if (abs(z-z1) > eps) go to 1
+          xtmp(i)=    xm-xl*z
+          xtmp(n+1-i)=xm+xl*z
+      !   the (n+1-i) terms are the symmetric counterparts
+          wtmp(i)=2.0_kr*xl/((1.0_kr-z*z)*pp*pp)
+          wtmp(n+1-i)=wtmp(i)
+        enddo
+
+      ! (half set and assumed symmetric)
+        kount=0
+        do i=1,n
+          if (xtmp(i) >= 0.0_kr) then
+            kount=kount+1
+            x(kount)=xtmp(i)   ! abscissas
+            w(kount)=wtmp(i)   ! weights
+          endif
+        enddo
+
+      end subroutine gauleg
+
       subroutine solve_dd(n,jmax,kmax,h,q,eps,sigt,sigs,mu,w,bc,phi,jnet)
 
         use global
@@ -431,7 +531,7 @@
               psi    =(s(j)*c2(j,m)+psi_in)/(1.0_kr+c1(j,m))
               phi(j) =phi(j)+psi*w(m)
               psi_in =2.0_kr*psi-psi_in
-              jnet(j)=jnet(j)+psi_in*mu(m)*w(m)
+              jnet(j)=jnet(j)-psi_in*mu(m)*w(m)
             enddo
             psi_bc(m)=psi_in
           enddo
@@ -555,7 +655,7 @@
               psi    =(s(j)*c2(j,m)+psi_in)/(1.0_kr+c1(j,m))
               phi(j) =phi(j)+psi*w(m)
               psi_in =(2.0_kr*psi-(1.0_kr-alpha(j,m))*psi_in)/(1.0_kr+alpha(j,m))
-              jnet(j)=jnet(j)+psi_in*mu(m)*w(m)
+              jnet(j)=jnet(j)-psi_in*mu(m)*w(m)
             enddo
             psi_bc(m)=psi_in
           enddo
@@ -637,7 +737,7 @@
           do j=1,jmax
             tau=sigt(j)*h/mu(m)
             alpha(j,m)=1.0_kr/(1.0_kr+6.0_kr/tau)
-            c1(j,m)   =      (2.0_kr/tau+alpha(j,m)-1.0_kr)
+            c1(j,m)   =       (2.0_kr/tau+alpha(j,m)-1.0_kr)
             c2(j,m)   =1.0_kr/(2.0_kr/tau+alpha(j,m)+1.0_kr)
           enddo
         enddo
@@ -686,7 +786,7 @@
               psi_in =psi_out
               phi(j) =phi(j) +psi*w(m)
               phil(j)=phil(j)+psil*w(m)
-              jnet(j)=jnet(j)+psi_in*mu(m)*w(m)
+              jnet(j)=jnet(j)-psi_in*mu(m)*w(m)
             enddo
             psi_bc(m)=psi_in
           enddo
@@ -785,7 +885,7 @@
               alpha(j,m)=1.0_kr/tanh(tau/2.0_kr)-2.0_kr/tau
             endif
             rbeta(j,m)=1.0_kr/alpha(j,m)-6.0_kr/tau
-            c1(j,m)=      (2.0_kr/tau+alpha(j,m)-1.0_kr)
+            c1(j,m)=       (2.0_kr/tau+alpha(j,m)-1.0_kr)
             c2(j,m)=1.0_kr/(2.0_kr/tau+alpha(j,m)+1.0_kr)
           enddo
         enddo
@@ -834,7 +934,7 @@
               psi_in =psi_out
               phi(j) =phi(j) +psi*w(m)
               phil(j)=phil(j)+psil*w(m)
-              jnet(j)=jnet(j)+psi_in*mu(m)*w(m)
+              jnet(j)=jnet(j)-psi_in*mu(m)*w(m)
             enddo
             psi_bc(m)=psi_in
           enddo
@@ -867,105 +967,5 @@
         deallocate(sl)
 
       end subroutine solve_lc
-
-      subroutine quad(n,mu,w)
-
-        use global
-
-        implicit none
-
-        integer(4),    intent(in)    :: n
-        real(kind=kr), intent(out)   :: mu(n/2)
-        real(kind=kr), intent(out)   :: w (n/2)
-
-        integer(4)                   :: j
-        integer(4),    parameter     :: nmaxp=300
-        real(kind=kr)                :: xnew(nmaxp)
-        real(kind=kr)                :: wnew(nmaxp)
-
-        xnew=0.0_kr
-        wnew=0.0_kr
-        call gauleg(-1.0_kr,1.0_kr,xnew,wnew,n)
-
-        do j=1,n/2
-          mu(j)=xnew(j)
-          w(j) =wnew(j)
-        enddo
-
-      end subroutine quad
-
-      subroutine gauleg(x1,x2,x,w,n)
- 
-        use global
-
-        implicit none
-
-        integer(4),    intent(in)    :: n
-        real(kind=kr), intent(in)    :: x1
-        real(kind=kr), intent(in)    :: x2
-        real(kind=kr), intent(inout) :: x(n)
-        real(kind=kr), intent(inout) :: w(n)
-
-        integer(4)                   :: i
-        integer(4)                   :: j
-        integer(4)                   :: m
-        integer(4)                   :: kount
-        integer(4),    parameter     :: nmax=300
-        real(kind=kr)                :: xm
-        real(kind=kr)                :: xl
-        real(kind=kr)                :: p1
-        real(kind=kr)                :: p2
-        real(kind=kr)                :: p3
-        real(kind=kr)                :: pi
-        real(kind=kr)                :: pp
-        real(kind=kr)                :: z
-        real(kind=kr)                :: z1
-        real(kind=kr)                :: xtmp(nmax)  ! full set of abscissas
-        real(kind=kr)                :: wtmp(nmax)  ! full set of weights
-        real(kind=kr), parameter     :: eps=1.0e-30
-
-        pi=4.0_kr*atan(1.0_kr)
-        if (n > nmax) then
-          write(0,'(a,1i6)') 'Gauss-Leg. integration problem --Increase PARAMETER: NMAX to at least:',n
-          stop
-        endif
-
-        m=(n+1)/2
-        xm=0.5_kr*(x2+x1)
-        xl=0.5_kr*(x2-x1)
-        do i=1,m
-          z=cos(pi*(i-0.25_kr)/(n+0.5_kr))
-      1   continue
-          p1=1.0_kr
-          p2=0.0_kr
-          do j=1,n
-            p3=p2
-            p2=p1
-            p1=((2.0_kr*j-1.0_kr)*z*p2-(j-1.0_kr)*p3)/j
-          enddo
-      !   p1 is now the desired Legendre polynomial. we next compute pp, its derivative,
-      !   by a standard relation involving also p2, the polynomial of one lower order.
-          pp=n*(z*p1-p2)/(z*z-1.0_kr)
-          z1=z
-          z=z1-p1/pp
-          if (abs(z-z1) > eps) go to 1
-          xtmp(i)=    xm-xl*z
-          xtmp(n+1-i)=xm+xl*z
-      !   the (n+1-i) terms are the symmetric counterparts
-          wtmp(i)=2.0_kr*xl/((1.0_kr-z*z)*pp*pp)
-          wtmp(n+1-i)=wtmp(i)
-        enddo
-
-      ! (half set and assumed symmetric)
-        kount=0
-        do i=1,n
-          if (xtmp(i) >= 0.0_kr) then
-            kount=kount+1
-            x(kount)=xtmp(i)   ! abscissas
-            w(kount)=wtmp(i)   ! weights
-          endif
-        enddo
-
-      end subroutine gauleg
 
     end program main

@@ -526,7 +526,7 @@
             enddo
             jnet(jmax+1)=jnet(jmax+1)+psi_in*mu(m)*w(m)
             if (bc(2) == 0) psi_in=0.0_kr
-            jnet(jmax+1)=jnet(jmax+1)+psi_in*mu(m)*w(m)
+            jnet(jmax+1)=jnet(jmax+1)-psi_in*mu(m)*w(m)
             do j=jmax,1,-1
               psi    =(s(j)*c2(j,m)+psi_in)/(1.0_kr+c1(j,m))
               phi(j) =phi(j)+psi*w(m)
@@ -650,7 +650,7 @@
             enddo
             jnet(jmax+1)=jnet(jmax+1)+psi_in*mu(m)*w(m)
             if (bc(2) == 0) psi_in=0.0_kr
-            jnet(jmax+1)=jnet(jmax+1)+psi_in*mu(m)*w(m)
+            jnet(jmax+1)=jnet(jmax+1)-psi_in*mu(m)*w(m)
             do j=jmax,1,-1
               psi    =(s(j)*c2(j,m)+psi_in)/(1.0_kr+c1(j,m))
               phi(j) =phi(j)+psi*w(m)
@@ -778,7 +778,7 @@
             enddo
             jnet(jmax+1)=jnet(jmax+1)+psi_in*mu(m)*w(m)
             if (bc(2) == 0) psi_in=0.0_kr
-            jnet(jmax+1)=jnet(jmax+1)+psi_in*mu(m)*w(m)
+            jnet(jmax+1)=jnet(jmax+1)-psi_in*mu(m)*w(m)
             do j=jmax,1,-1
               psi_out=c2(j,m)*(2.0_kr*(s(j)-alpha(j,m)*sl(j))/sigt(j)+c1(j,m)*psi_in)
               psi    =((1.0_kr+alpha(j,m))*psi_out+(1.0_kr-alpha(j,m))*psi_in)/2.0_kr+alpha(j,m)*sl(j)/sigt(j)
@@ -926,7 +926,7 @@
             enddo
             jnet(jmax+1)=jnet(jmax+1)+psi_in*mu(m)*w(m)
             if (bc(2) == 0) psi_in=0.0_kr
-            jnet(jmax+1)=jnet(jmax+1)+psi_in*mu(m)*w(m)
+            jnet(jmax+1)=jnet(jmax+1)-psi_in*mu(m)*w(m)
             do j=jmax,1,-1
               psi_out=c2(j,m)*(2.0_kr*(s(j)-alpha(j,m)*sl(j))/sigt(j)+c1(j,m)*psi_in)
               psi    =((1.0_kr+alpha(j,m))*psi_out+(1.0_kr-alpha(j,m))*psi_in)/2.0_kr+alpha(j,m)*sl(j)/sigt(j)
